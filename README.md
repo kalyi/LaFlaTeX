@@ -1,2 +1,2 @@
-# LaFlaTex
+# LaFlaTeX
 Flatten your LaTeX projects.
