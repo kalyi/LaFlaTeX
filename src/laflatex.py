@@ -67,13 +67,15 @@ def main():
         outdir.mkdir()
     outdir = outdir.resolve()
 
-    cmd_handlers = [handlers.DocumentClassHandler(),
-                    handlers.GraphicsPathHandler(),
-                    handlers.InputHandler(),
-                    handlers.BibliographyHandler(),
-                    handlers.IncludeGraphicsHandler(),
-                    handlers.InlineCommentHandler(),
-                    handlers.LineCommentHandler()]
+    cmd_handlers = [
+        handlers.InlineCommentHandler(),
+        handlers.LineCommentHandler(),
+        handlers.DocumentClassHandler(),
+        handlers.GraphicsPathHandler(),
+        handlers.InputHandler(),
+        handlers.BibliographyHandler(),
+        handlers.IncludeGraphicsHandler()
+    ]
 
     for t in args.texfile:
         env.main = Path(t)
