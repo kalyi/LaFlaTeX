@@ -52,6 +52,9 @@ def main():
     parser.add_argument('-o', '--outdir', action='store', type=str,
                         default="laflatex",
                         help='The output directory.')
+    parser.add_argument('-r', '--remove', action='append', type=str,
+                        metavar='STRING', default=list(),
+                        help='Remove lines containing <STRING>.')
     parser.add_argument('texfile', nargs='*', type=str,
                         help='The main LaTeX file. ')
     args = parser.parse_args()
@@ -76,6 +79,9 @@ def main():
         handlers.BibliographyHandler(),
         handlers.IncludeGraphicsHandler()
     ]
+
+    for custom_str in args.remove:
+        cmd_handlers.insert(0, handlers.CustomContentHandler(custom_str))
 
     for t in args.texfile:
         env.main = Path(t)

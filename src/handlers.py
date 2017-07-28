@@ -21,7 +21,22 @@
 
 """Handlers for LaTeX commands."""
 
+############################################################
 import re
+############################################################
+
+
+def escape4re(string):
+    return string.translate(str.maketrans({"\\": r"\\",
+                                           "[": r"\[",
+                                           "]": r"\]",
+                                           "{": r"\{",
+                                           "}": r"\}",
+                                           "^": r"\^",
+                                           "$": r"\$",
+                                           ".": r"\."}))
+
+############################################################
 
 
 class LatexCmdHandler:
@@ -184,6 +199,22 @@ class LineCommentHandler(LatexRegexCmdHandler):
         super().__init__()
         self._name = 'LineCommentHandler'
         pattern = '^%(.*)'
+        # print(pattern)
+        self._setPattern(pattern)
+
+    def apply(self, line, env):
+        m = self._regex.search(line)
+        if m is None:
+            return line
+        return ''
+
+
+class CustomContentHandler(LatexRegexCmdHandler):
+    def __init__(self, content):
+        super().__init__()
+        self._name = 'CustomContentHandler'
+        self._content = content
+        pattern = escape4re(content)
         # print(pattern)
         self._setPattern(pattern)
 
