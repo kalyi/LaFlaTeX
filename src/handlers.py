@@ -36,7 +36,7 @@ class LatexRegexCmdHandler(LatexCmdHandler):
     def __init__(self):
         super().__init__()
         self._pattern_optarg = "((?:\[[^\]]*\])?)"
-        self._pattern_arg = "\{([^\{]*)\}"
+        self._pattern_arg = "\{+([^\}]*)\}+"
         self._pattern_backslash = "\\\\"
 
     def _setPattern(self, pattern):
