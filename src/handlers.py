@@ -51,7 +51,7 @@ class LatexRegexCmdHandler(LatexCmdHandler):
     def __init__(self):
         super().__init__()
         self._pattern_optarg = "((?:\[[^\]]*\])?)"
-        self._pattern_arg = "\{+([^\}]*)\}+"
+        self._pattern_arg = "\{([^\}]*)\}"
         self._pattern_backslash = "\\\\"
 
     def _setPattern(self, pattern):
@@ -85,6 +85,7 @@ class GraphicsPathHandler(LatexRegexCmdHandler):
     def __init__(self):
         super().__init__()
         self._name = 'GraphicsPathHandler'
+        self._pattern_arg = "\{+([^\}]*)\}+"
         pattern = (self._pattern_backslash + "graphicspath" +
                    self._pattern_arg)
         # print(pattern)
