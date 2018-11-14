@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf8; -*-
 #
-# Copyright (C) 2017 : Kathrin Hanauer
+# Copyright (C) 2017-2018 : Kathrin Hanauer
 #
 # This file is part of LaFlaTeX.
 #
@@ -166,10 +166,10 @@ class IncludeGraphicsHandler(LatexRegexCmdHandler):
             return line
         ig = m.group(2)
         print("Found includegraphics with value {}.".format(ig))
-        graphics_file = ig if ig.endswith(".pdf") else ig + ".pdf"
+        graphics_file = ig if ig.lower().endswith((".pdf", ".png", ".eps", ".jpg", ".jpeg")) else ig + ".pdf"
         graphics_path = env.graphics_path / graphics_file
         ig_masked = ig.replace('/', '_')
-        graphics_file_masked = (ig_masked if ig_masked.endswith(".pdf")
+        graphics_file_masked = (ig_masked if ig_masked.lower().endswith((".pdf", ".png", ".eps", ".jpg", ".jpeg"))
                                 else ig_masked + ".pdf")
         env.files_to_copy.append((graphics_path.resolve(),
                                   graphics_file_masked))
