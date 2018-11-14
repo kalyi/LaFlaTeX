@@ -71,14 +71,14 @@ class DocumentClassHandler(LatexRegexCmdHandler):
     def apply(self, line, env):
         m = self._regex.search(line)
         if m is None:
-            return line
+            return (line, False)
         cls = m.group(2)
         print("Found documentclass with name {}.".format(cls))
         cls_file = cls + '.cls'
         cls_path = env.cwd / cls_file
         if cls_path.exists():
             env.files_to_copy.append((cls_path.resolve(), cls_file))
-        return line
+        return (line, False)
 
 
 class GraphicsPathHandler(LatexRegexCmdHandler):
@@ -94,13 +94,13 @@ class GraphicsPathHandler(LatexRegexCmdHandler):
     def apply(self, line, env):
         m = self._regex.search(line)
         if m is None:
-            return line
+            return (line, False)
         gp = m.group(1)
         print("Found graphicspath with value {}.".format(gp))
         gp_path = env.cwd / gp
         env.graphics_path = gp_path.resolve()
         # print("Setting graphics path to {}.".format(gp_path))
-        return ''
+        return ('', False)
 
 
 class InputHandler(LatexRegexCmdHandler):
@@ -115,7 +115,7 @@ class InputHandler(LatexRegexCmdHandler):
     def apply(self, line, env):
         m = self._regex.search(line)
         if m is None:
-            return line
+            return (line, False)
         inp = m.group(2)
         print("Found input/include with value {}.".format(inp))
         input_file = inp if inp.endswith(".tex") else inp + ".tex"
@@ -126,7 +126,7 @@ class InputHandler(LatexRegexCmdHandler):
         env.files_to_process.append((input_path.resolve(), inp_masked_file))
         sub = '\\\\\\1{' + inp_masked + '}'
         n_input = self._regex.sub(sub, line)
-        return n_input
+        return (n_input, False)
 
 
 class BibliographyHandler(LatexRegexCmdHandler):
@@ -141,14 +141,14 @@ class BibliographyHandler(LatexRegexCmdHandler):
     def apply(self, line, env):
         m = self._regex.search(line)
         if m is None:
-            return line
+            return (line, False)
         print("Found bibliography.")
         bib_file = env.main.stem + '.bbl'
         bib_path = env.cwd / bib_file
         env.files_to_copy.append((bib_path.resolve(), bib_file))
         sub = '\\\\bibliography{' + env.main.stem + '}'
         n_bib = self._regex.sub(sub, line)
-        return n_bib
+        return (n_bib, False)
 
 
 class IncludeGraphicsHandler(LatexRegexCmdHandler):
@@ -163,7 +163,7 @@ class IncludeGraphicsHandler(LatexRegexCmdHandler):
     def apply(self, line, env):
         m = self._regex.search(line)
         if m is None:
-            return line
+            return (line, False)
         ig = m.group(2)
         print("Found includegraphics with value {}.".format(ig))
         graphics_file = ig if ig.lower().endswith((".pdf", ".png", ".eps", ".jpg", ".jpeg")) else ig + ".pdf"
@@ -175,24 +175,24 @@ class IncludeGraphicsHandler(LatexRegexCmdHandler):
                                   graphics_file_masked))
         sub = '\\\\includegraphics\\1{' + ig_masked + '}'
         n_ig = self._regex.sub(sub, line)
-        return n_ig
+        return (n_ig, False)
 
 
 class InlineCommentHandler(LatexRegexCmdHandler):
     def __init__(self):
         super().__init__()
         self._name = 'InlineCommentHandler'
-        pattern = '^(.+)%(.*)$'
+        pattern = '^([^%]+)%(.*)$'
         # print(pattern)
         self._setPattern(pattern)
 
     def apply(self, line, env):
         m = self._regex.match(line)
         if m is None:
-            return line
+            return (line, False)
         sub = '\\1%'
         n_cmd = self._regex.sub(sub, line)
-        return n_cmd
+        return (n_cmd, False)
 
 
 class LineCommentHandler(LatexRegexCmdHandler):
@@ -206,15 +206,16 @@ class LineCommentHandler(LatexRegexCmdHandler):
     def apply(self, line, env):
         m = self._regex.search(line)
         if m is None:
-            return line
-        return ''
+            return (line, False)
+        return ('', True)
 
 
 class CustomContentHandler(LatexRegexCmdHandler):
-    def __init__(self, content):
+    def __init__(self, content, keep):
         super().__init__()
         self._name = 'CustomContentHandler'
         self._content = content
+        self._keep = keep
         pattern = escape4re(content)
         # print(pattern)
         self._setPattern(pattern)
@@ -222,5 +223,5 @@ class CustomContentHandler(LatexRegexCmdHandler):
     def apply(self, line, env):
         m = self._regex.search(line)
         if m is None:
-            return line
-        return ''
+            return (line, False)
+        return (line, True) if self._keep else ('', True)

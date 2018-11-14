@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf8; -*-
 #
-# Copyright (C) 2017 : Kathrin Hanauer
+# Copyright (C) 2017-2018 : Kathrin Hanauer
 #
 # This file is part of LaFlaTeX.
 #
@@ -42,7 +42,9 @@ def processTexFile(infile, outfile, env, cmd_handlers):
     with infile.open() as ifile, outfile.open('w') as ofile:
         for line in ifile:
             for h in cmd_handlers:
-                line = h.apply(line, env)
+                line, stop = h.apply(line, env)
+                if stop:
+                    break
             ofile.write(line)
 
 
@@ -55,6 +57,9 @@ def main():
     parser.add_argument('-r', '--remove', action='append', type=str,
                         metavar='STRING', default=list(),
                         help='Remove lines containing <STRING>.')
+    parser.add_argument('-k', '--keep', action='append', type=str,
+                        metavar='STRING', default=list(),
+                        help='Keep lines containing <STRING>.')
     parser.add_argument('texfile', nargs='*', type=str,
                         help='The main LaTeX file. ')
     args = parser.parse_args()
@@ -80,8 +85,11 @@ def main():
         handlers.IncludeGraphicsHandler()
     ]
 
+    for custom_str in args.keep:
+        cmd_handlers.insert(0, handlers.CustomContentHandler(custom_str, True))
+
     for custom_str in args.remove:
-        cmd_handlers.insert(0, handlers.CustomContentHandler(custom_str))
+        cmd_handlers.insert(0, handlers.CustomContentHandler(custom_str, False))
 
     for t in args.texfile:
         env.main = Path(t)
@@ -95,7 +103,10 @@ def main():
     while env.files_to_copy:
         i, o = env.files_to_copy.pop(0)
         outfile = outdir / o
-        shutil.copy(str(i), str(outfile))
+        try:
+            shutil.copy(str(i), str(outfile))
+        except IOError as e:
+            print("Could not copy file {} to {}: {}".format(str(i), str(outfile), e))
 
 if __name__ == "__main__":
     main()

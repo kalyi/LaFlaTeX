@@ -31,4 +31,6 @@ optional arguments:
                         The output directory.
   -r STRING, --remove STRING
                         Remove lines containing <STRING>.
+  -k STRING, --keep STRING
+                        Keep lines containing <STRING>.
 ```
