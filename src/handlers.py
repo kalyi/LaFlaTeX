@@ -182,7 +182,7 @@ class InlineCommentHandler(LatexRegexCmdHandler):
     def __init__(self):
         super().__init__()
         self._name = 'InlineCommentHandler'
-        pattern = '^([^%]+)%(.*)$'
+        pattern = '^([^%]*[^' + self._pattern_backslash + '])%(.*)$'
         # print(pattern)
         self._setPattern(pattern)
 
