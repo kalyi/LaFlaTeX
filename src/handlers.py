@@ -104,9 +104,10 @@ class GraphicsPathHandler(LatexRegexCmdHandler):
 
 
 class InputHandler(LatexRegexCmdHandler):
-    def __init__(self):
+    def __init__(self, inline):
         super().__init__()
         self._name = 'InputHandler'
+        self._inline = inline
         pattern = (self._pattern_backslash + "(input|include)" +
                    self._pattern_arg)
         # print(pattern)
@@ -123,8 +124,8 @@ class InputHandler(LatexRegexCmdHandler):
         inp_masked = inp.replace('/', '_')
         inp_masked_file = (inp_masked if inp_masked.endswith(".tex") else
                            inp_masked + ".tex")
-        env.files_to_process.append((input_path.resolve(), inp_masked_file))
-        sub = '\\\\\\1{' + inp_masked + '}'
+        env.files_to_process.append((input_path.resolve(), "" if self._inline else inp_masked_file))
+        sub = "" if self._inline else '\\\\\\1{' + inp_masked + '}'
         n_input = self._regex.sub(sub, line)
         return (n_input, False)
 

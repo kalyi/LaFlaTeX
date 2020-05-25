@@ -36,16 +36,24 @@ import shutil
 class Environment:
     pass
 
-
-def processTexFile(infile, outfile, env, cmd_handlers):
+def processTexFileHandle(infile, ofile, env, cmd_handlers, inline_files):
     print("Processing latex file: {}".format(infile))
-    with infile.open() as ifile, outfile.open('w') as ofile:
+    with infile.open() as ifile:
         for line in ifile:
             for h in cmd_handlers:
                 line, stop = h.apply(line, env)
                 if stop:
                     break
             ofile.write(line)
+            if inline_files:
+                while env.files_to_process:
+                    i, o = env.files_to_process.pop(0)
+                    processTexFileHandle(i, ofile, env, cmd_handlers, inline_files)
+
+def processTexFile(infile, outfile, env, cmd_handlers, inline_files):
+    print("Processing latex file: {}".format(infile))
+    with outfile.open('w') as ofile:
+        processTexFileHandle(infile, ofile, env, cmd_handlers, inline_files)
 
 
 def main():
@@ -59,6 +67,9 @@ def main():
                         help='Remove lines containing <STRING>.')
     parser.add_argument('-k', '--keep', action='append', type=str,
                         metavar='STRING', default=list(),
+                        help='Keep lines containing <STRING>.')
+    parser.add_argument('-i', '--inline', action='store_true',
+                         default=False,
                         help='Keep lines containing <STRING>.')
     parser.add_argument('texfile', nargs='*', type=str,
                         help='The main LaTeX file. ')
@@ -80,7 +91,7 @@ def main():
         handlers.LineCommentHandler(),
         handlers.DocumentClassHandler(),
         handlers.GraphicsPathHandler(),
-        handlers.InputHandler(),
+        handlers.InputHandler(args.inline),
         handlers.BibliographyHandler(),
         handlers.IncludeGraphicsHandler()
     ]
@@ -98,7 +109,7 @@ def main():
     while env.files_to_process:
         i, o = env.files_to_process.pop(0)
         outfile = outdir / o
-        processTexFile(i, outfile, env, cmd_handlers)
+        processTexFile(i, outfile, env, cmd_handlers, args.inline)
 
     while env.files_to_copy:
         i, o = env.files_to_copy.pop(0)
