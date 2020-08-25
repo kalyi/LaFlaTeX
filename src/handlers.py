@@ -225,4 +225,49 @@ class CustomContentHandler(LatexRegexCmdHandler):
         m = self._regex.search(line)
         if m is None:
             return (line, False)
+        print('Found line containing {}, {} it.'.format(
+            self._content, 'keeping' if self._keep else 'removing'))
         return (line, True) if self._keep else ('', True)
+
+
+class CustomUncommentHandler(LatexRegexCmdHandler):
+    def __init__(self, content):
+        super().__init__()
+        self._name = 'CustomUncommentHandler'
+        self._content = content
+        pattern = escape4re(content)
+        pattern = '^%(.*)' + escape4re(content)
+        # print(pattern)
+        self._setPattern(pattern)
+
+    def apply(self, line, env):
+        m = self._regex.match(line)
+        if m is None:
+            return (line, False)
+        print('Found line containing {}, uncommenting it.'.format(
+            self._content))
+        sub = '\\1%'
+        n_cmd = self._regex.sub(sub, line)
+        return (n_cmd, False)
+
+
+class GeneralFileHandler(LatexRegexCmdHandler):
+    def __init__(self, path):
+        super().__init__()
+        self._name = 'GeneralFileHandler'
+        pattern = escape4re(path)
+        #print(pattern)
+        self._setPattern(pattern)
+        self._path = path
+        self._masked = path.replace('/', '_')
+
+    def apply(self, line, env):
+        m = self._regex.search(line)
+        if m is None:
+            return (line, False)
+        print("Found mentioning of path {}, will be replaced by {}.".format(
+            self._path, self._masked))
+        path = env.cwd / self._path
+        env.files_to_process.append((path.resolve(), self._masked))
+        nf = self._regex.sub(self._masked, line)
+        return (nf, False)

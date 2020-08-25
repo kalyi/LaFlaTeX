@@ -68,9 +68,15 @@ def main():
     parser.add_argument('-k', '--keep', action='append', type=str,
                         metavar='STRING', default=list(),
                         help='Keep lines containing <STRING>.')
+    parser.add_argument('-u', '--uncomment', action='append', type=str,
+                        metavar='STRING', default=list(),
+                        help='Uncomment lines containing <STRING>.')
     parser.add_argument('-i', '--inline', action='store_true',
                          default=False,
-                        help='Keep lines containing <STRING>.')
+                        help='Create one TEX file.')
+    parser.add_argument('-f', '--file', action='append', type=str,
+                        metavar='STRING', default=list(),
+                        help='Replace occurrences of file <STRING>.')
     parser.add_argument('texfile', nargs='*', type=str,
                         help='The main LaTeX file. ')
     args = parser.parse_args()
@@ -96,11 +102,17 @@ def main():
         handlers.IncludeGraphicsHandler()
     ]
 
+    for custom_file in args.file:
+        cmd_handlers.insert(0, handlers.GeneralFileHandler(custom_file))
+
     for custom_str in args.keep:
         cmd_handlers.insert(0, handlers.CustomContentHandler(custom_str, True))
 
     for custom_str in args.remove:
         cmd_handlers.insert(0, handlers.CustomContentHandler(custom_str, False))
+
+    for custom_str in args.uncomment:
+        cmd_handlers.insert(0, handlers.CustomUncommentHandler(custom_str))
 
     for t in args.texfile:
         env.main = Path(t)
