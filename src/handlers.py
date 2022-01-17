@@ -53,10 +53,16 @@ class LatexRegexCmdHandler(LatexCmdHandler):
         self._pattern_optarg = "((?:\[[^\]]*\])?)"
         self._pattern_arg = "\{([^\}]*)\}"
         self._pattern_backslash = "\\\\"
+        self._patterns = []
+        self._regexes = []
 
     def _setPattern(self, pattern):
         self._pattern = pattern
         self._regex = re.compile(pattern)
+
+    def _addPattern(self, pattern):
+        self._patterns.append(pattern)
+        self._regexes.append(re.compile(pattern))
 
 
 class DocumentClassHandler(LatexRegexCmdHandler):
@@ -127,7 +133,7 @@ class InputHandler(LatexRegexCmdHandler):
         env.files_to_process.append((input_path.resolve(), "" if self._inline else inp_masked_file))
         sub = "" if self._inline else '\\\\\\1{' + inp_masked + '}'
         n_input = self._regex.sub(sub, line)
-        return (n_input, False)
+        return (None if self._inline else n_input, self._inline)
 
 
 class BibliographyHandler(LatexRegexCmdHandler):
@@ -169,7 +175,7 @@ class IncludeGraphicsHandler(LatexRegexCmdHandler):
         print("Found includegraphics with value {}.".format(ig))
         graphics_file = ig if ig.lower().endswith((".pdf", ".png", ".eps", ".jpg", ".jpeg")) else ig + ".pdf"
         graphics_path = env.graphics_path / graphics_file
-        ig_masked = ig.replace('/', '_')
+        ig_masked = ig.replace('/', '_').replace('..', 'dd')
         graphics_file_masked = (ig_masked if ig_masked.lower().endswith((".pdf", ".png", ".eps", ".jpg", ".jpeg"))
                                 else ig_masked + ".pdf")
         env.files_to_copy.append((graphics_path.resolve(),
@@ -208,7 +214,7 @@ class LineCommentHandler(LatexRegexCmdHandler):
         m = self._regex.search(line)
         if m is None:
             return (line, False)
-        return ('', True)
+        return (None, True)
 
 
 class CustomContentHandler(LatexRegexCmdHandler):
@@ -271,3 +277,35 @@ class GeneralFileHandler(LatexRegexCmdHandler):
         env.files_to_process.append((path.resolve(), self._masked))
         nf = self._regex.sub(self._masked, line)
         return (nf, False)
+
+class CommentEnvironmentHandler(LatexRegexCmdHandler):
+    def __init__(self):
+        super().__init__()
+        self._name = 'CommentsEnvironmentHandler'
+        self._addPattern("^" + self._pattern_backslash + "usepackage\{comment\}")
+        self._addPattern(self._pattern_backslash + "begin\{comment\}")
+        self._addPattern(self._pattern_backslash + "end\{comment\}")
+        self.waitForBegin()
+
+    def waitForBegin(self):
+        self._active = False
+        self._regex = self._regexes[1]
+
+    def waitForEnd(self):
+        self._active = True
+        self._regex = self._regexes[2]
+
+    def apply(self, line, env):
+        m = self._regexes[0].search(line)
+        if m:
+            return (None, True)
+        m = self._regex.search(line)
+        if m is None:
+            return (None, True) if self._active else (line, False)
+        if self._active:
+            print("Found end of comments environment.")
+            self.waitForBegin()
+        else:
+            print("Found begin of comments environment.")
+            self.waitForEnd()
+        return (None, True)

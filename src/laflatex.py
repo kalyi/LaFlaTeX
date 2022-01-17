@@ -44,7 +44,8 @@ def processTexFileHandle(infile, ofile, env, cmd_handlers, inline_files):
                 line, stop = h.apply(line, env)
                 if stop:
                     break
-            ofile.write(line)
+            if line is not None:
+                ofile.write(line)
             if inline_files:
                 while env.files_to_process:
                     i, o = env.files_to_process.pop(0)
@@ -95,6 +96,7 @@ def main():
     cmd_handlers = [
         handlers.InlineCommentHandler(),
         handlers.LineCommentHandler(),
+        handlers.CommentEnvironmentHandler(),
         handlers.DocumentClassHandler(),
         handlers.GraphicsPathHandler(),
         handlers.InputHandler(args.inline),
